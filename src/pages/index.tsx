@@ -1,11 +1,21 @@
 // src/pages/index.tsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SCENARIOS } from '../components/scenarios';
+
+type Field = {
+  type: string;
+  title: string;
+};
+
+type FormJson = {
+  title: string;
+  fields: Field[];
+};
 
 export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedVisaType, setSelectedVisaType] = useState('');
-  const [formJson, setFormJson] = useState<Record<string, any> | null>(null);
+  const [formJson, setFormJson] = useState<FormJson | null>(null);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value;
@@ -39,8 +49,8 @@ export default function Home() {
       } else {
         console.error('Ошибка генерации формы:', data.error);
       }
-    } catch (err) {
-      console.error('Серверная ошибка:', err);
+    } catch (error) {
+      console.error('Серверная ошибка:', error);
     }
   };
 
