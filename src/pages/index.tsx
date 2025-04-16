@@ -2,26 +2,20 @@
 import { useState } from 'react';
 import { SCENARIOS } from '../components/scenarios';
 
-type Field = {
-  type: string;
-  title: string;
-};
-
-type FormJson = {
-  title: string;
-  fields: Field[];
-};
+type Country = keyof typeof SCENARIOS;
+type VisaType<C extends Country> = keyof typeof SCENARIOS[C];
+type Field = { type: string; title: string };
+type FormJson = { title: string; fields: Field[] };
 
 export default function Home() {
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedVisaType, setSelectedVisaType] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<Country | ''>('');
+  const [selectedVisaType, setSelectedVisaType] = useState<string>('');
   const [formJson, setFormJson] = useState<FormJson | null>(null);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const country = e.target.value;
+    const country = e.target.value as Country;
     setSelectedCountry(country);
-    setSelectedVisaType('');
-    const visaTypes = Object.keys(SCENARIOS[country] || {});
+    const visaTypes = Object.keys(SCENARIOS[country]) as VisaType<Country>[];
     const defaultVisa = visaTypes[0] || '';
     setSelectedVisaType(defaultVisa);
     setFormJson(SCENARIOS[country]?.[defaultVisa] || null);
@@ -30,7 +24,9 @@ export default function Home() {
   const handleVisaTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const visaType = e.target.value;
     setSelectedVisaType(visaType);
-    setFormJson(SCENARIOS[selectedCountry]?.[visaType] || null);
+    if (selectedCountry) {
+      setFormJson(SCENARIOS[selectedCountry]?.[visaType as keyof typeof SCENARIOS[typeof selectedCountry]] || null);
+    }
   };
 
   const handleGenerate = async () => {
@@ -88,7 +84,7 @@ export default function Home() {
             >
               <option value="">Select Visa Type</option>
               {selectedCountry &&
-                Object.keys(SCENARIOS[selectedCountry] || {}).map((type) => (
+                Object.keys(SCENARIOS[selectedCountry]).map((type) => (
                   <option key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </option>
