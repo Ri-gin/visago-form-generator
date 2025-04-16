@@ -35,6 +35,7 @@ export default function Home() {
 
   const handleGenerate = async () => {
     if (!formJson) return;
+
     setIsLoading(true);
 
     try {
@@ -47,39 +48,26 @@ export default function Home() {
       const data = await res.json();
 
       if (data.success && data.link) {
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        const interval = setInterval(async () => {
+        const checkLink = async () => {
           try {
-            const check = await fetch(data.link);
-            if (check.ok) {
-              clearInterval(interval);
+            const response = await fetch(data.link, { method: 'HEAD' });
+            if (response.ok) {
               window.open(data.link, '_blank');
-              setIsLoading(false);
             } else {
-              attempts++;
-              if (attempts >= maxAttempts) {
-                clearInterval(interval);
-                alert('Форма не была опубликована вовремя. Попробуйте позже.');
-                setIsLoading(false);
-              }
+              setTimeout(checkLink, 1000);
             }
-          } catch (err) {
-            attempts++;
-            if (attempts >= maxAttempts) {
-              clearInterval(interval);
-              alert('Форма не была опубликована вовремя. Попробуйте позже.');
-              setIsLoading(false);
-            }
+          } catch {
+            setTimeout(checkLink, 1000);
           }
-        }, 3000);
+        };
+
+        checkLink();
       } else {
         console.error('Ошибка генерации формы:', data.error);
-        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Серверная ошибка:', error);
+    } catch {
+      console.error('Серверная ошибка');
+    } finally {
       setIsLoading(false);
     }
   };
