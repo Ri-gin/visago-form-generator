@@ -48,10 +48,30 @@ export default function Home() {
       const data = await res.json();
 
       if (data.success && data.link) {
-        setTimeout(() => {
-          window.open(data.link, '_blank');
-          setIsLoading(false);
-        }, 1500); // Задержка публикации Typeform
+        const link = data.link;
+        let attempts = 0;
+
+        const interval = setInterval(async () => {
+          try {
+            const response = await fetch(link);
+            if (response.ok) {
+              clearInterval(interval);
+              setIsLoading(false);
+              window.open(link, '_blank');
+            } else {
+              console.log('⏳ Форма ещё не готова...');
+            }
+          } catch {
+            console.log('⚠️ Ошибка при проверке доступности формы...');
+          }
+
+          attempts++;
+          if (attempts > 30) {
+            clearInterval(interval);
+            setIsLoading(false);
+            alert('Форма не была опубликована вовремя. Попробуйте позже.');
+          }
+        }, 2000);
       } else {
         console.error('Ошибка генерации формы:', data.error);
         setIsLoading(false);
@@ -64,7 +84,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]">
-      <div className="bg-white/50 backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
+      <div className="bg-white/90 backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
         <h1 className="text-2xl font-bold flex items-center gap-2 justify-center text-blue-900 mb-6">
           🌍 Visago Auto Form
         </h1>
