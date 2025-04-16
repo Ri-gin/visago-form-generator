@@ -33,45 +33,31 @@ export default function Home() {
     }
   };
 
-  const waitAndOpenLink = (link: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(link, { method: 'HEAD' });
-        if (response.ok) {
-          clearInterval(interval);
-          window.open(link, '_blank');
-        }
-      } catch (err) {
-        // ждём дальше
-      }
-    }, 3000);
-  };
-
   const handleGenerate = async () => {
     if (!formJson) return;
-  
+
     setIsLoading(true);
-  
+
     try {
       const res = await fetch('/api/create-form', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formJson),
       });
-  
+
       const data = await res.json();
-  
+
       if (data.success && data.link) {
         const checkInterval = setInterval(async () => {
           try {
-            const response = await fetch(data.link);
+            const response = await fetch(data.link, { method: 'HEAD' });
             if (response.ok) {
               clearInterval(checkInterval);
               window.open(data.link, '_blank');
               setIsLoading(false);
             }
           } catch {
-            // Ждём следующую проверку
+            // Ждём следующую попытку
           }
         }, 3000);
       } else {
@@ -82,10 +68,11 @@ export default function Home() {
       console.error('Серверная ошибка');
       setIsLoading(false);
     }
-  };  
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]"><div className="bg-white backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]">
+      <div className="bg-white p-8 rounded-xl shadow-xl animate-fade-in">
         <h1 className="text-2xl font-bold flex items-center gap-2 justify-center text-blue-900 mb-6">
           🌍 Visago Auto Form
         </h1>
