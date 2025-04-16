@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SCENARIOS } from '../components/scenarios';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type Country = keyof typeof SCENARIOS;
 type VisaType<C extends Country> = keyof typeof SCENARIOS[C];
@@ -11,6 +12,7 @@ export default function Home() {
   const [selectedVisaType, setSelectedVisaType] = useState<string>('');
   const [formJson, setFormJson] = useState<FormJson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value as Country;
@@ -48,24 +50,18 @@ export default function Home() {
       const data = await res.json();
 
       if (data.success && data.link) {
-        const checkInterval = setInterval(async () => {
-          try {
-            const response = await fetch(data.link, { method: 'HEAD' });
-            if (response.ok) {
-              clearInterval(checkInterval);
-              window.open(data.link, '_blank');
-              setIsLoading(false);
-            }
-          } catch {
-            // Ждём следующую попытку
-          }
-        }, 3000);
+        setShowToast(true);
+        setTimeout(() => {
+          window.open(data.link, '_blank');
+          setIsLoading(false);
+          setShowToast(false);
+        }, 60000);
       } else {
         console.error('Ошибка генерации формы:', data.error);
         setIsLoading(false);
       }
-    } catch {
-      console.error('Серверная ошибка');
+    } catch (error) {
+      console.error('Серверная ошибка:', error);
       setIsLoading(false);
     }
   };
@@ -125,6 +121,21 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.5 }}
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg z-50"
+          >
+            Форма готовится. Мы откроем её через 60 секунд...
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
