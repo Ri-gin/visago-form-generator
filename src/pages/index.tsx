@@ -1,4 +1,3 @@
-// src/pages/index.tsx
 import { useState } from 'react';
 import { SCENARIOS } from '../components/scenarios';
 
@@ -11,6 +10,7 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<Country | ''>('');
   const [selectedVisaType, setSelectedVisaType] = useState<string>('');
   const [formJson, setFormJson] = useState<FormJson | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value as Country;
@@ -25,12 +25,18 @@ export default function Home() {
     const visaType = e.target.value;
     setSelectedVisaType(visaType);
     if (selectedCountry) {
-      setFormJson(SCENARIOS[selectedCountry]?.[visaType as keyof typeof SCENARIOS[typeof selectedCountry]] || null);
+      setFormJson(
+        SCENARIOS[selectedCountry]?.[
+          visaType as keyof typeof SCENARIOS[typeof selectedCountry]
+        ] || null
+      );
     }
   };
 
   const handleGenerate = async () => {
     if (!formJson) return;
+
+    setIsLoading(true);
 
     try {
       const res = await fetch('/api/create-form', {
@@ -40,13 +46,19 @@ export default function Home() {
       });
 
       const data = await res.json();
+
       if (data.success && data.link) {
-        window.open(data.link, '_blank');
+        setTimeout(() => {
+          window.open(data.link, '_blank');
+          setIsLoading(false);
+        }, 1500); // Задержка публикации Typeform
       } else {
         console.error('Ошибка генерации формы:', data.error);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Серверная ошибка:', error);
+      setIsLoading(false);
     }
   };
 
@@ -93,11 +105,15 @@ export default function Home() {
           </div>
 
           <button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded mt-4"
+            className={`w-full py-2 rounded mt-4 font-semibold ${
+              isLoading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
             onClick={handleGenerate}
-            disabled={!formJson}
+            disabled={!formJson || isLoading}
           >
-            Создать форму
+            {isLoading ? 'Создаём форму...' : 'Создать форму'}
           </button>
         </div>
       </div>
