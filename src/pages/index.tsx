@@ -35,7 +35,6 @@ export default function Home() {
 
   const handleGenerate = async () => {
     if (!formJson) return;
-
     setIsLoading(true);
 
     try {
@@ -48,30 +47,33 @@ export default function Home() {
       const data = await res.json();
 
       if (data.success && data.link) {
-        const link = data.link;
         let attempts = 0;
+        const maxAttempts = 10;
 
         const interval = setInterval(async () => {
           try {
-            const response = await fetch(link);
-            if (response.ok) {
+            const check = await fetch(data.link);
+            if (check.ok) {
               clearInterval(interval);
+              window.open(data.link, '_blank');
               setIsLoading(false);
-              window.open(link, '_blank');
             } else {
-              console.log('⏳ Форма ещё не готова...');
+              attempts++;
+              if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                alert('Форма не была опубликована вовремя. Попробуйте позже.');
+                setIsLoading(false);
+              }
             }
-          } catch {
-            console.log('⚠️ Ошибка при проверке доступности формы...');
+          } catch (err) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              clearInterval(interval);
+              alert('Форма не была опубликована вовремя. Попробуйте позже.');
+              setIsLoading(false);
+            }
           }
-
-          attempts++;
-          if (attempts > 30) {
-            clearInterval(interval);
-            setIsLoading(false);
-            alert('Форма не была опубликована вовремя. Попробуйте позже.');
-          }
-        }, 2000);
+        }, 3000);
       } else {
         console.error('Ошибка генерации формы:', data.error);
         setIsLoading(false);
@@ -84,7 +86,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]">
-      <div className="bg-white p-8 rounded-xl shadow-xl animate-fade-in">
+      <div className="bg-white backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
         <h1 className="text-2xl font-bold flex items-center gap-2 justify-center text-blue-900 mb-6">
           🌍 Visago Auto Form
         </h1>
