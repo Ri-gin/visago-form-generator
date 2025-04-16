@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SCENARIOS } from '../components/scenarios';
-import { AnimatePresence, motion } from 'framer-motion';
 
 type Country = keyof typeof SCENARIOS;
 type VisaType<C extends Country> = keyof typeof SCENARIOS[C];
@@ -12,7 +11,8 @@ export default function Home() {
   const [selectedVisaType, setSelectedVisaType] = useState<string>('');
   const [formJson, setFormJson] = useState<FormJson | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [countdown, setCountdown] = useState(60);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value as Country;
@@ -39,6 +39,8 @@ export default function Home() {
     if (!formJson) return;
 
     setIsLoading(true);
+    setCountdown(60);
+    setGeneratedLink(null);
 
     try {
       const res = await fetch('/api/create-form', {
@@ -50,18 +52,24 @@ export default function Home() {
       const data = await res.json();
 
       if (data.success && data.link) {
-        setShowToast(true);
-        setTimeout(() => {
-          window.open(data.link, '_blank');
-          setIsLoading(false);
-          setShowToast(false);
-        }, 60000);
+        setGeneratedLink(data.link);
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              window.open(data.link, '_blank');
+              setIsLoading(false);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       } else {
         console.error('Ошибка генерации формы:', data.error);
         setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Серверная ошибка:', error);
+    } catch (err) {
+      console.error('Серверная ошибка:', err);
       setIsLoading(false);
     }
   };
@@ -110,32 +118,21 @@ export default function Home() {
 
           <button
             className={`w-full py-2 rounded mt-4 font-semibold ${
-              isLoading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
+              isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
             } text-white`}
             onClick={handleGenerate}
             disabled={!formJson || isLoading}
           >
             {isLoading ? 'Создаём форму...' : 'Создать форму'}
           </button>
+
+          {generatedLink && countdown > 0 && (
+            <div className="mt-4 text-center bg-blue-600 text-white py-2 rounded">
+              Форма готовится. Мы откроем её через {countdown} секунд...
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Toast */}
-      <AnimatePresence>
-        {showToast && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.5 }}
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg z-50"
-          >
-            Форма готовится. Мы откроем её через 60 секунд...
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
