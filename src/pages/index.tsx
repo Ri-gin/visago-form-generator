@@ -84,7 +84,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]">
-      <div className="bg-white/90 backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
+      <div className="bg-white p-8 rounded-xl shadow-xl animate-fade-in">
         <h1 className="text-2xl font-bold flex items-center gap-2 justify-center text-blue-900 mb-6">
           🌍 Visago Auto Form
         </h1>
