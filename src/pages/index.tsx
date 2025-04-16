@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SCENARIOS } from '../components/scenarios';
 
 type Country = keyof typeof SCENARIOS;
