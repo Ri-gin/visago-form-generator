@@ -49,30 +49,40 @@ export default function Home() {
 
   const handleGenerate = async () => {
     if (!formJson) return;
-
+  
     setIsLoading(true);
-
+  
     try {
       const res = await fetch('/api/create-form', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formJson),
       });
-
+  
       const data = await res.json();
-
+  
       if (data.success && data.link) {
-        waitAndOpenLink(data.link);
-        setIsLoading(false);
+        const checkInterval = setInterval(async () => {
+          try {
+            const response = await fetch(data.link);
+            if (response.ok) {
+              clearInterval(checkInterval);
+              window.open(data.link, '_blank');
+              setIsLoading(false);
+            }
+          } catch {
+            // Ждём следующую проверку
+          }
+        }, 3000);
       } else {
-        alert('Ошибка генерации формы. Попробуйте позже.');
+        console.error('Ошибка генерации формы:', data.error);
         setIsLoading(false);
       }
-    } catch (error) {
-      alert('Серверная ошибка. Попробуйте позже.');
+    } catch {
+      console.error('Серверная ошибка');
       setIsLoading(false);
     }
-  };
+  };  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed bg-[url('/карта_фон.svg')]"><div className="bg-white backdrop-blur-lg p-8 rounded-xl shadow-xl animate-fade-in">
