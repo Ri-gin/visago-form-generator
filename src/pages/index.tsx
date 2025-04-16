@@ -13,6 +13,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [linkReady, setLinkReady] = useState(false);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value as Country;
@@ -41,6 +42,7 @@ export default function Home() {
     setIsLoading(true);
     setCountdown(60);
     setGeneratedLink(null);
+    setLinkReady(false);
 
     try {
       const res = await fetch('/api/create-form', {
@@ -53,11 +55,12 @@ export default function Home() {
 
       if (data.success && data.link) {
         setGeneratedLink(data.link);
+
         const timer = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
               clearInterval(timer);
-              window.open(data.link, '_blank');
+              setLinkReady(true);
               setIsLoading(false);
               return 0;
             }
@@ -126,10 +129,21 @@ export default function Home() {
             {isLoading ? 'Создаём форму...' : 'Создать форму'}
           </button>
 
-          {generatedLink && countdown > 0 && (
+          {generatedLink && !linkReady && (
             <div className="mt-4 text-center bg-blue-600 text-white py-2 rounded">
-              Форма готовится. Мы откроем её через {countdown} секунд...
+              Форма готовится. Мы отправим ссылку через {countdown} секунд...
             </div>
+          )}
+
+          {linkReady && generatedLink && (
+            <a
+              href={generatedLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 block text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded"
+            >
+              Открыть готовую форму
+            </a>
           )}
         </div>
       </div>
